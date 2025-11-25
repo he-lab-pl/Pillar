@@ -708,27 +708,27 @@ light:
             call.set_brightness(0.9);
             call.perform();
 
-      # KOMINEK (Super Smooth)
+      # KOMINEK (Ultra Stable & Calm)
       - lambda:
           name: "Kominek"
-          update_interval: 150ms
+          update_interval: 250ms
           lambda: |-
-             // Delikatniejsze zmiany kolorów
-             float red = 0.85f + ((rand() % 10) / 100.0f);   // 0.85 - 0.95
-             float green = ((rand() % 15) / 100.0f);         // 0.00 - 0.15 (mniej zieleni/żółci)
-             float warm = 0.3f + ((rand() % 20) / 100.0f);   // 0.30 - 0.50
+             // Bardzo stabilna baza, minimalne wahania
+             float red = 0.90f + ((rand() % 8) / 100.0f);    // 0.90 - 0.98
+             float green = ((rand() % 12) / 100.0f);         // 0.00 - 0.12 (odcień pomarańczu)
+             float warm = 0.40f + ((rand() % 10) / 100.0f);  // 0.40 - 0.50 (stabilny ciepły podkład)
              
              auto call = id(led_light).turn_on();
              call.set_state(true);
-             call.set_transition_length(150); // Pełna płynność
+             call.set_transition_length(250); // Płynne, powolne przejścia
              
              call.set_rgb(red, green, 0.0);
              call.set_cold_white(0.0);
              call.set_warm_white(warm);
              
-             // Bardzo delikatne zmiany jasności (brak skoków)
-             if (rand() % 10 == 0) call.set_brightness(0.85);
-             else call.set_brightness(0.95);
+             // Stała jasność efektu, aby uniknąć przygasania całej lampy
+             // Wrażenie ruchu pochodzi tylko z delikatnych zmian koloru
+             call.set_brightness(0.9);
              
              call.perform();
 
