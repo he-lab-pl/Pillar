@@ -873,27 +873,59 @@ light:
             call.set_brightness(0.9);
             call.perform();
 
-      # KOMINEK (Ultra Stable & Calm)
+      # KOMINEK (Smart Random: Irregular + Sparks)
       - lambda:
           name: "Kominek"
-          update_interval: 250ms
+          update_interval: 100ms # Bezpieczniejszy interwał (10Hz)
           lambda: |-
-             // Bardzo stabilna baza, minimalne wahania
-             float red = 0.90f + ((rand() % 8) / 100.0f);    // 0.90 - 0.98
-             float green = ((rand() % 12) / 100.0f);         // 0.00 - 0.12 (odcień pomarańczu)
-             float warm = 0.40f + ((rand() % 10) / 100.0f);  // 0.40 - 0.50 (stabilny ciepły podkład)
-             
+             static uint32_t next_update = 0;
+             uint32_t now = millis();
+
+             // Jeśli jeszcze nie minął wylosowany czas, nic nie rób (trzymaj poprzedni stan)
+             if (now < next_update) return;
+
              auto call = id(led_light).turn_on();
              call.set_state(true);
-             call.set_transition_length(250); // Płynne, powolne przejścia
-             
-             call.set_rgb(red, green, 0.0);
-             call.set_cold_white(0.0);
-             call.set_warm_white(warm);
-             
-             // Stała jasność efektu, aby uniknąć przygasania całej lampy
-             // Wrażenie ruchu pochodzi tylko z delikatnych zmian koloru
-             call.set_brightness(0.9);
+
+             // Logika losowania: CZY TO MA BYĆ ISKRA? (5% szans)
+             if ((rand() % 20) == 0) {
+                // --- TRYB ISKRA (Błysk) ---
+                // Bardzo krótka tranzycja = ostry błysk bez wygładzania
+                call.set_transition_length(30); 
+                
+                // Jasny, białawy błysk (dodajemy cold_white i podbijamy jasność)
+                call.set_rgb(1.0, 0.5, 0.0); 
+                call.set_cold_white(0.6); // Iskra ma zimny, jasny rdzeń
+                call.set_warm_white(1.0);
+                call.set_brightness(1.0);
+                
+                // Iskra trwa ułamek sekundy, zaraz potem wróci normalny ogień
+                next_update = now + 100 + (rand() % 100); 
+             } 
+             else {
+                // --- TRYB NORMALNY (Spokojny płomień) ---
+                // Losujemy czas trwania tego stanu (od 300ms do 1000ms)
+                // To zapewnia NIEREGULARNOŚĆ zmian (raz szybciej, raz wolniej)
+                uint32_t duration = 300 + (rand() % 700);
+                
+                call.set_transition_length(duration); // Płynne przejście dopasowane do czasu trwania
+                
+                // Kolory ognia (stabilne, ciepłe)
+                float r = 0.90f + ((rand() % 10) / 100.0f);
+                float g = ((rand() % 12) / 100.0f);
+                float w = 0.40f + ((rand() % 10) / 100.0f);
+                
+                call.set_rgb(r, g, 0.0);
+                call.set_cold_white(0.0);
+                call.set_warm_white(w);
+                
+                // Delikatne falowanie jasności
+                float b = 0.80f + ((rand() % 15) / 100.0f);
+                call.set_brightness(b);
+                
+                // Następna decyzja dopiero po zakończeniu tej tranzycji
+                next_update = now + duration;
+             }
              
              call.perform();
 
