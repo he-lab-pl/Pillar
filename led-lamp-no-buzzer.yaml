@@ -587,9 +587,9 @@ light:
             auto call = id(led_light).turn_on();
             call.set_state(true);
             call.set_transition_length(1000);
-            // Mix dla uzyskania ok. 4200K - TYLKO BIAŁE KANAŁY
-            // Wymuszamy 0.0 na RGB, aby wyłączyć diody kolorowe
-            call.set_rgb(0.0f, 0.0f, 0.0f);
+            // Mix dla uzyskania ok. 4200K + ciepły żółty odcień RGB
+            // RGB: 255, 178, 0 (warm yellow)
+            call.set_rgb(1.0f, 0.698f, 0.0f); // 178/255 = 0.698
             call.set_cold_white(0.55f);
             call.set_warm_white(1.0f);
             call.set_brightness(0.9f);
@@ -640,7 +640,7 @@ light:
       # IMPREZA
       - lambda:
           name: "Impreza"
-          update_interval: 200ms
+          update_interval: 300ms
           lambda: |-
             auto call = id(led_light).turn_on();
             call.set_state(true);
@@ -689,7 +689,7 @@ light:
       # KOMINEK 1 (Zbalansowany - Smart Random)
       - lambda:
           name: "Kominek 1"
-          update_interval: 100ms
+          update_interval: 150ms
           lambda: |-
              static uint32_t next_update = 0;
              uint32_t now = millis();
@@ -699,18 +699,18 @@ light:
              auto call = id(led_light).turn_on();
              call.set_state(true);
 
-             // 5% szans na iskrę
-             if ((rand() % 20) == 0) {
+             // 2% szans na iskrę (rzadziej: rand % 50)
+             if ((rand() % 50) == 0) {
                 call.set_transition_length(30); 
                 call.set_rgb(1.0, 0.5, 0.0); 
-                call.set_cold_white(0.25);
-                call.set_warm_white(1.0);
+                call.set_cold_white(0.03); // Iskra 3% jasności
+                call.set_warm_white(0.6);
                 call.set_brightness(1.0);
                 next_update = now + 100 + (rand() % 100); 
              } 
              else {
-                // Normalny ogień (0.3s - 1.0s)
-                uint32_t duration = 300 + (rand() % 700);
+                // Wolniejszy ogień (0.5s - 1.5s)
+                uint32_t duration = 500 + (rand() % 1000);
                 call.set_transition_length(duration);
                 
                 float r = 0.90f + ((rand() % 10) / 100.0f);
@@ -723,6 +723,29 @@ light:
                 call.set_brightness(0.80f + ((rand() % 15) / 100.0f));
                 next_update = now + duration;
              }
+             call.perform();
+
+      # KOMINEK 2 (Jasny Domowy - Stabilny)
+      - lambda:
+          name: "Kominek 2"
+          update_interval: 300ms
+          lambda: |-
+             auto call = id(led_light).turn_on();
+             call.set_state(true);
+             call.set_transition_length(300);
+
+             // Dominacja Warm White
+             // Fluktuacja KOLORU (Czerwony <-> Pomarańczowy)
+             // Red stały wysoki, Green fluktuuje (0.0 - 0.5)
+             // Orange to R=1, G=0.5. Red to R=1, G=0.
+             
+             float g = (rand() % 51) / 100.0f; // 0.00 - 0.50
+             float w = 0.80f + ((rand() % 20) / 100.0f); // Bardzo jasny biały (0.8-1.0)
+
+             call.set_rgb(1.0, g, 0.0);
+             call.set_cold_white(0.0);
+             call.set_warm_white(w);
+             call.set_brightness(0.95); // Prawie max jasność stale
              call.perform();
 
       # ŻAR (Dawniej Kominek 2 - Spokojny Żar - Wolny, Czerwony)
@@ -747,99 +770,7 @@ light:
              call.set_brightness(0.6f + ((rand() % 10) / 100.0f));
              call.perform();
 
-      # KOMINEK 3 (Dynamiczne Ognisko - Szybki, Żółty)
-      - lambda:
-          name: "Kominek 3"
-          update_interval: 80ms
-          lambda: |-
-             static uint32_t next_update = 0;
-             uint32_t now = millis();
-             if (now < next_update) return;
 
-             auto call = id(led_light).turn_on();
-             call.set_state(true);
-
-             // 5% szans na iskrę (rzadziej: rand % 20)
-             if ((rand() % 20) == 0) {
-                call.set_transition_length(20); 
-                call.set_rgb(1.0, 0.6, 0.0); 
-                call.set_cold_white(0.5); // Mocniejsza iskra
-                call.set_warm_white(1.0);
-                // Iskra max 60% jasności (minimalnie jaśniejsza od tła 0.5)
-                call.set_brightness(0.6);
-                next_update = now + 80 + (rand() % 50); 
-             } else {
-                // Szybsze zmiany (0.1s - 0.5s)
-                uint32_t duration = 100 + (rand() % 400);
-                call.set_transition_length(duration);
-                
-                // Więcej żółtego (green component)
-                float r = 0.80f + ((rand() % 20) / 100.0f);
-                float g = 0.10f + ((rand() % 20) / 100.0f); // Do 0.30 green
-                float w = 0.30f + ((rand() % 20) / 100.0f);
-                
-                call.set_rgb(r, g, 0.0);
-                call.set_cold_white(0.0);
-                call.set_warm_white(w);
-                // Tło ciemniejsze (0.5) żeby iskra (0.6) była widoczna
-                call.set_brightness(0.5);
-                next_update = now + duration;
-             }
-             call.perform();
-
-      # KOMINEK 4 (Jasny Domowy - Stabilny)
-      - lambda:
-          name: "Kominek 4"
-          update_interval: 150ms
-          lambda: |-
-             auto call = id(led_light).turn_on();
-             call.set_state(true);
-             call.set_transition_length(150);
-
-             // Dominacja Warm White
-             // Fluktuacja KOLORU (Czerwony <-> Pomarańczowy)
-             // Red stały wysoki, Green fluktuuje (0.0 - 0.5)
-             // Orange to R=1, G=0.5. Red to R=1, G=0.
-             
-             float g = (rand() % 51) / 100.0f; // 0.00 - 0.50
-             float w = 0.80f + ((rand() % 20) / 100.0f); // Bardzo jasny biały (0.8-1.0)
-
-             call.set_rgb(1.0, g, 0.0);
-             call.set_cold_white(0.0);
-             call.set_warm_white(w);
-             call.set_brightness(0.95); // Prawie max jasność stale
-             call.perform();
-
-      # KOMINEK 5 (Agresywny - Test "Trzaskania")
-      - lambda:
-          name: "Kominek 5"
-          update_interval: 100ms
-          lambda: |-
-             static uint32_t next_update = 0;
-             uint32_t now = millis();
-             if (now < next_update) return;
-
-             auto call = id(led_light).turn_on();
-             call.set_state(true);
-
-             // Krótkie czasy trwania (50ms - 200ms)
-             uint32_t duration = 50 + (rand() % 150);
-             call.set_transition_length(duration / 2); // Tranzycja krótsza niż trwanie = skok
-
-             float r = 0.8f + ((rand() % 20) / 100.0f);
-             float g = ((rand() % 10) / 100.0f);
-             float w = 0.2f + ((rand() % 80) / 100.0f); // Duże skoki ciepłego białego
-
-             call.set_rgb(r, g, 0.0);
-             call.set_cold_white(0.0);
-             call.set_warm_white(w);
-             
-             // Duże skoki jasności
-             if (rand() % 3 == 0) call.set_brightness(0.6);
-             else call.set_brightness(1.0);
-
-             next_update = now + duration;
-             call.perform();
 
       # CYBERPUNK
       - lambda:
