@@ -534,57 +534,35 @@ light:
             call.set_brightness(1.0);
             call.perform();
       
-      # ŚWIECZKA (Wygładzona)
+      # ŚWIECZKA
       - lambda:
           name: "Świeczka"
-          update_interval: 120ms
+          update_interval: 120ms # Średni interwał
           lambda: |-
-            static float target_level = 0.85f;
-            static float smooth_level = 0.85f;
-            static float smooth_red = 0.25f;
-            static float smooth_yellow = 0.2f;
-            static float smooth_warm = 0.85f;
-            static uint32_t last_burst = 0;
-
-            uint32_t now = millis();
-            // Mniejsze szumy dla stabilności
-            float small_noise = ((rand() % 11) - 5) / 100.0f;
-            target_level += small_noise;
-            target_level = max(0.65f, min(1.0f, target_level));
-
-            // Rzadsze "podmuchy"
-            if (now - last_burst > (rand() % 1700 + 800)) {
-              target_level = max(0.75f, min(1.0f, target_level + (rand() % 11 + 5) / 100.0f));
-              last_burst = now;
-            }
-
-            // Przywrócone wygładzanie (smoothing) - klucz do "miękkości"
-            const float smoothing = 0.15f; 
-            smooth_level = smooth_level + smoothing * (target_level - smooth_level);
-
-            float red_target = smooth_level * 0.35f;
-            float yellow_target = smooth_level * 0.25f;
-            float warm_target = smooth_level;
-
-            // Delikatne wahania koloru
-            red_target += ((rand() % 5) - 2) / 100.0f;
-            yellow_target += ((rand() % 5) - 2) / 100.0f;
-
-            smooth_red = smooth_red + 0.15f * (red_target - smooth_red);
-            smooth_yellow = smooth_yellow + 0.15f * (yellow_target - smooth_yellow);
-            smooth_warm = smooth_warm + 0.15f * (warm_target - smooth_warm);
-
-            smooth_red = max(0.0f, min(1.0f, smooth_red));
-            smooth_yellow = max(0.0f, min(1.0f, smooth_yellow));
-            smooth_warm = max(0.0f, min(1.0f, smooth_warm));
-
             auto call = id(led_light).turn_on();
             call.set_state(true);
-            call.set_transition_length(110); // Płynne przejście, prawie równe interwałowi
-            call.set_rgb(smooth_red, smooth_yellow * 0.5f, 0.0f);
-            call.set_cold_white(0.0f);
-            call.set_warm_white(smooth_warm);
-            call.set_brightness(smooth_level);
+            call.set_transition_length(40); // Krótka tranzycja = iskrzenie
+            
+            // Głównie ciepły biały z dodatkiem czerwieni (bursztyn)
+            float base_warm = 0.8f;
+            float flicker = ((rand() % 40) - 20) / 100.0f; // +/- 20% migotania
+            float brightness = base_warm + flicker;
+            
+            // Ograniczenie zakresu
+            if (brightness > 1.0) brightness = 1.0;
+            if (brightness < 0.4) brightness = 0.4;
+            
+            // Okazjonalne "iskry" (biały błysk)
+            float cold = 0.0f;
+            if (rand() % 15 == 0) { // Co 15 cykli (średnio)
+               cold = 0.3f; // Błysk zimnego
+               brightness = 1.0f; // Max jasność
+            }
+            
+            call.set_rgb(0.15f, 0.05f, 0.0f); // Lekka czerwień dla głębi
+            call.set_cold_white(cold);
+            call.set_warm_white(1.0f); // Zawsze dużo ciepłego
+            call.set_brightness(brightness);
             call.perform();
       
       # MAKSYMALNA JASNOŚĆ
@@ -708,60 +686,154 @@ light:
             call.set_brightness(0.9);
             call.perform();
 
-      # KOMINEK (Smart Random: Irregular + Sparks)
+      # KOMINEK 1 (Zbalansowany - Smart Random)
       - lambda:
-          name: "Kominek"
-          update_interval: 100ms # Bezpieczniejszy interwał (10Hz)
+          name: "Kominek 1"
+          update_interval: 100ms
           lambda: |-
              static uint32_t next_update = 0;
              uint32_t now = millis();
 
-             // Jeśli jeszcze nie minął wylosowany czas, nic nie rób (trzymaj poprzedni stan)
              if (now < next_update) return;
 
              auto call = id(led_light).turn_on();
              call.set_state(true);
 
-             // Logika losowania: CZY TO MA BYĆ ISKRA? (5% szans)
+             // 5% szans na iskrę
              if ((rand() % 20) == 0) {
-                // --- TRYB ISKRA (Błysk) ---
-                // Bardzo krótka tranzycja = ostry błysk bez wygładzania
                 call.set_transition_length(30); 
-                
-                // Jasny, białawy błysk (dodajemy cold_white i podbijamy jasność)
                 call.set_rgb(1.0, 0.5, 0.0); 
-                call.set_cold_white(0.6); // Iskra ma zimny, jasny rdzeń
+                call.set_cold_white(0.25);
                 call.set_warm_white(1.0);
                 call.set_brightness(1.0);
-                
-                // Iskra trwa ułamek sekundy, zaraz potem wróci normalny ogień
                 next_update = now + 100 + (rand() % 100); 
              } 
              else {
-                // --- TRYB NORMALNY (Spokojny płomień) ---
-                // Losujemy czas trwania tego stanu (od 300ms do 1000ms)
-                // To zapewnia NIEREGULARNOŚĆ zmian (raz szybciej, raz wolniej)
+                // Normalny ogień (0.3s - 1.0s)
                 uint32_t duration = 300 + (rand() % 700);
+                call.set_transition_length(duration);
                 
-                call.set_transition_length(duration); // Płynne przejście dopasowane do czasu trwania
-                
-                // Kolory ognia (stabilne, ciepłe)
                 float r = 0.90f + ((rand() % 10) / 100.0f);
                 float g = ((rand() % 12) / 100.0f);
-                float w = 0.40f + ((rand() % 10) / 100.0f);
+                float w = 0.48f + ((rand() % 12) / 100.0f); // Jasny podkład
                 
                 call.set_rgb(r, g, 0.0);
                 call.set_cold_white(0.0);
                 call.set_warm_white(w);
-                
-                // Delikatne falowanie jasności
-                float b = 0.80f + ((rand() % 15) / 100.0f);
-                call.set_brightness(b);
-                
-                // Następna decyzja dopiero po zakończeniu tej tranzycji
+                call.set_brightness(0.80f + ((rand() % 15) / 100.0f));
                 next_update = now + duration;
              }
+             call.perform();
+
+      # KOMINEK 2 (Spokojny Żar - Wolny, Czerwony)
+      - lambda:
+          name: "Kominek 2"
+          update_interval: 200ms
+          lambda: |-
+             auto call = id(led_light).turn_on();
+             call.set_state(true);
+             call.set_transition_length(200); // Pełna płynność
+
+             // Tylko głęboka czerwień i trochę ciepłego
+             float r = 0.95f + ((rand() % 5) / 100.0f);
+             float g = ((rand() % 5) / 100.0f); // Prawie brak zieleni
+             float w = 0.20f + ((rand() % 10) / 100.0f); // Ciemny ciepły
+
+             call.set_rgb(r, g, 0.0);
+             call.set_cold_white(0.0);
+             call.set_warm_white(w);
              
+             // Ciemniejszy efekt (0.6 - 0.7)
+             call.set_brightness(0.6f + ((rand() % 10) / 100.0f));
+             call.perform();
+
+      # KOMINEK 3 (Dynamiczne Ognisko - Szybki, Żółty)
+      - lambda:
+          name: "Kominek 3"
+          update_interval: 80ms
+          lambda: |-
+             static uint32_t next_update = 0;
+             uint32_t now = millis();
+             if (now < next_update) return;
+
+             auto call = id(led_light).turn_on();
+             call.set_state(true);
+
+             // 10% szans na iskrę (częstsze)
+             if ((rand() % 10) == 0) {
+                call.set_transition_length(20); 
+                call.set_rgb(1.0, 0.6, 0.0); 
+                call.set_cold_white(0.5); // Mocniejsza iskra
+                call.set_warm_white(1.0);
+                call.set_brightness(1.0);
+                next_update = now + 80 + (rand() % 50); 
+             } else {
+                // Szybsze zmiany (0.1s - 0.5s)
+                uint32_t duration = 100 + (rand() % 400);
+                call.set_transition_length(duration);
+                
+                // Więcej żółtego (green component)
+                float r = 0.80f + ((rand() % 20) / 100.0f);
+                float g = 0.10f + ((rand() % 20) / 100.0f); // Do 0.30 green
+                float w = 0.30f + ((rand() % 20) / 100.0f);
+                
+                call.set_rgb(r, g, 0.0);
+                call.set_cold_white(0.0);
+                call.set_warm_white(w);
+                call.set_brightness(0.8);
+                next_update = now + duration;
+             }
+             call.perform();
+
+      # KOMINEK 4 (Jasny Domowy - Stabilny)
+      - lambda:
+          name: "Kominek 4"
+          update_interval: 150ms
+          lambda: |-
+             auto call = id(led_light).turn_on();
+             call.set_state(true);
+             call.set_transition_length(150);
+
+             // Dominacja Warm White
+             float r = 0.70f + ((rand() % 31) / 100.0f); // RGB tylko jako dodatek koloru
+             float g = 0.15f; 
+             float w = 0.80f + ((rand() % 20) / 100.0f); // Bardzo jasny biały (0.8-1.0)
+
+             call.set_rgb(r, g, 0.0);
+             call.set_cold_white(0.0);
+             call.set_warm_white(w);
+             call.set_brightness(0.95); // Prawie max jasność stale
+             call.perform();
+
+      # KOMINEK 5 (Agresywny - Test "Trzaskania")
+      - lambda:
+          name: "Kominek 5"
+          update_interval: 100ms
+          lambda: |-
+             static uint32_t next_update = 0;
+             uint32_t now = millis();
+             if (now < next_update) return;
+
+             auto call = id(led_light).turn_on();
+             call.set_state(true);
+
+             // Krótkie czasy trwania (50ms - 200ms)
+             uint32_t duration = 50 + (rand() % 150);
+             call.set_transition_length(duration / 2); // Tranzycja krótsza niż trwanie = skok
+
+             float r = 0.8f + ((rand() % 20) / 100.0f);
+             float g = ((rand() % 10) / 100.0f);
+             float w = 0.2f + ((rand() % 80) / 100.0f); // Duże skoki ciepłego białego
+
+             call.set_rgb(r, g, 0.0);
+             call.set_cold_white(0.0);
+             call.set_warm_white(w);
+             
+             // Duże skoki jasności
+             if (rand() % 3 == 0) call.set_brightness(0.6);
+             else call.set_brightness(1.0);
+
+             next_update = now + duration;
              call.perform();
 
       # CYBERPUNK

@@ -85,3 +85,4 @@
 - Upewnij się, że wszystkie elementy są prawidłowo zamontowane
 - Przetestuj działanie przycisków dotykowych przed finalnym montażem
 
+
