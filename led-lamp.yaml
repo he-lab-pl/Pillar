@@ -619,8 +619,10 @@ light:
     cold_white_color_temperature: 6500 K
     warm_white_color_temperature: 2700 K
     
-    # Wyłączenie interlocka
-    color_interlock: false
+    # Wymuszenie rozdzielenia RGB i Białych kanałów
+    # Gdy color_interlock: true, RGB i White nie mogą działać jednocześnie
+    # Tworzy dwa tryby: RGB i COLD_WARM_WHITE
+    color_interlock: true
     
     # Gamma correction - poprawia płynność ściemniania LED
     # Wartość 2.8 jest standardem dla LED
@@ -908,9 +910,9 @@ light:
              }
              call.perform();
 
-      # KOMINEK 2 (Spokojny Żar - Wolny, Czerwony)
+      # ŻAR (Dawniej Kominek 2 - Spokojny Żar - Wolny, Czerwony)
       - lambda:
-          name: "Kominek 2"
+          name: "Żar"
           update_interval: 200ms
           lambda: |-
              auto call = id(led_light).turn_on();
@@ -942,13 +944,14 @@ light:
              auto call = id(led_light).turn_on();
              call.set_state(true);
 
-             // 10% szans na iskrę (częstsze)
-             if ((rand() % 10) == 0) {
+             // 5% szans na iskrę (rzadziej: rand % 20)
+             if ((rand() % 20) == 0) {
                 call.set_transition_length(20); 
                 call.set_rgb(1.0, 0.6, 0.0); 
                 call.set_cold_white(0.5); // Mocniejsza iskra
                 call.set_warm_white(1.0);
-                call.set_brightness(1.0);
+                // Iskra max 60% jasności (minimalnie jaśniejsza od tła 0.5)
+                call.set_brightness(0.6);
                 next_update = now + 80 + (rand() % 50); 
              } else {
                 // Szybsze zmiany (0.1s - 0.5s)
@@ -963,7 +966,8 @@ light:
                 call.set_rgb(r, g, 0.0);
                 call.set_cold_white(0.0);
                 call.set_warm_white(w);
-                call.set_brightness(0.8);
+                // Tło ciemniejsze (0.5) żeby iskra (0.6) była widoczna
+                call.set_brightness(0.5);
                 next_update = now + duration;
              }
              call.perform();
@@ -978,11 +982,14 @@ light:
              call.set_transition_length(150);
 
              // Dominacja Warm White
-             float r = 0.70f + ((rand() % 31) / 100.0f); // RGB tylko jako dodatek koloru
-             float g = 0.15f; 
+             // Fluktuacja KOLORU (Czerwony <-> Pomarańczowy)
+             // Red stały wysoki, Green fluktuuje (0.0 - 0.5)
+             // Orange to R=1, G=0.5. Red to R=1, G=0.
+             
+             float g = (rand() % 51) / 100.0f; // 0.00 - 0.50
              float w = 0.80f + ((rand() % 20) / 100.0f); // Bardzo jasny biały (0.8-1.0)
 
-             call.set_rgb(r, g, 0.0);
+             call.set_rgb(1.0, g, 0.0);
              call.set_cold_white(0.0);
              call.set_warm_white(w);
              call.set_brightness(0.95); // Prawie max jasność stale
@@ -1165,11 +1172,30 @@ binary_sensor:
               condition:
                 lambda: 'return !id(buttons_locked);'
               then:
-                - logger.log: "Prawy przycisk - rozjaśnianie (+15%)"
-                - light.dim_relative:
-                    id: led_light
-                    relative_brightness: 15%
-                    transition_length: 0.5s
+                - if:
+                    condition:
+                      light.is_off: led_light
+                    then:
+                      - logger.log: "Light OFF -> Turning ON Whites Only"
+                      - lambda: |-
+                          auto call = id(led_light).turn_on();
+                          call.set_effect("None");
+                          call.set_brightness(0.15);
+                          call.set_rgb(0.0, 0.0, 0.0);
+                          call.set_cold_white(1.0);
+                          call.set_warm_white(1.0);
+                          call.set_transition_length(1000);
+                          call.perform();
+                          // Wymuszenie wyłączenia RGB bezpośrednio na wyjściach
+                          id(output_red).set_level(0.0);
+                          id(output_green).set_level(0.0);
+                          id(output_blue).set_level(0.0);
+                    else:
+                      - logger.log: "Prawy przycisk - rozjaśnianie (+15%)"
+                      - light.dim_relative:
+                          id: led_light
+                          relative_brightness: 15%
+                          transition_length: 0.5s
               else:
                 - logger.log: "Przycisk zablokowany"
 
