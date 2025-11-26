@@ -459,10 +459,8 @@ light:
     cold_white_color_temperature: 6500 K
     warm_white_color_temperature: 2700 K
     
-    # Wymuszenie rozdzielenia RGB i Białych kanałów
-    # Gdy color_interlock: true, RGB i White nie mogą działać jednocześnie
-    # Tworzy dwa tryby: RGB i COLD_WARM_WHITE
-    color_interlock: true
+    # Wyłączenie interlocka
+    color_interlock: false
     
     # Domyślna jasność i temperatura przy włączeniu
     default_transition_length: 1s
@@ -985,20 +983,17 @@ binary_sensor:
                     condition:
                       light.is_off: led_light
                     then:
-                      - logger.log: "Light OFF -> Turning ON Whites Only"
+                      - logger.log: "Light OFF -> Turning ON Warm Orange + White"
                       - lambda: |-
                           auto call = id(led_light).turn_on();
                           call.set_effect("None");
                           call.set_brightness(0.15);
-                          call.set_rgb(0.0, 0.0, 0.0);
+                          // Warm orange: R=255, G=38, B=0
+                          call.set_rgb(1.0, 0.149, 0.0); // 38/255 = 0.149
                           call.set_cold_white(1.0);
                           call.set_warm_white(1.0);
                           call.set_transition_length(1000);
                           call.perform();
-                          // Wymuszenie wyłączenia RGB bezpośrednio na wyjściach
-                          id(output_red).set_level(0.0);
-                          id(output_green).set_level(0.0);
-                          id(output_blue).set_level(0.0);
                     else:
                       - logger.log: "Prawy przycisk - rozjaśnianie (+15%)"
                       - light.dim_relative:
