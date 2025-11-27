@@ -25,7 +25,7 @@ esphome:
   
   project:
     name: "home-element-lab.pillar"
-    version: "1.0"
+    version: "1.2"
 
   on_boot:
     priority: 600
@@ -61,12 +61,15 @@ esp32_improv:
 
 captive_portal:
 
+http_request:
+
 api:
   reboot_timeout: 0s
 
 ota:
   - platform: esphome
     password: "${ota_password}"
+  - platform: http_request
 
 logger:
   level: INFO
@@ -74,6 +77,12 @@ logger:
 
 web_server:
   port: 80
+
+update:
+  - platform: http_request
+    name: "${friendly_name} Firmware"
+    source: https://raw.githubusercontent.com/he-lab-pl/Pillar/main/manifest.json
+
 
 # ============================================================================
 # HARDWARE
