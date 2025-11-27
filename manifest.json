@@ -1,17 +1,17 @@
 {
     "name": "HEL Pillar",
-    "version": "1.8",
-    "url": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.1.8.bin",
+    "version": "1.8a",
+    "url": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.1.8a.bin",
     "release_url": "https://github.com/he-lab-pl/Pillar",
-    "summary": "Aktualizacja 1.8: Nowe sensory, rebranding na HE-L Pillar.",
+    "summary": "Aktualizacja 1.8a: Poprawki.",
     "builds": [
         {
             "chipFamily": "ESP32-C3",
             "ota": {
-                "md5": "5369913a20da77c87b81ca63cadf0df5",
-                "path": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.1.8.bin",
+                "md5": "21a5990e87ebbcf9caf5b0e3aca3c503",
+                "path": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.1.8a.bin",
                 "release_url": "https://github.com/he-lab-pl/Pillar",
-                "summary": "Aktualizacja 1.8: Nowe sensory, rebranding na HE-L Pillar."
+                "summary": "Aktualizacja 1.8a: Poprawki."
             }
         }
     ]
