@@ -1,6 +1,6 @@
 {
     "name": "HEL Pillar",
-    "version": "1.2",
+    "version": "1.6",
     "builds": [
         {
             "chipFamily": "ESP32-C3",
@@ -8,7 +8,7 @@
                 "md5": "F45C070A8A7C516D2F24BA67D488216D",
                 "path": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/hel-pillar.bin",
                 "release_url": "https://github.com/he-lab-pl/Pillar",
-                "summary": "Firmware with automatic update support"
+                "summary": "Testowa aktualizacja lampy bez nowych funkcji. To jest test."
             }
         }
     ]
