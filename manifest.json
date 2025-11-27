@@ -8,7 +8,7 @@
         {
             "chipFamily": "ESP32-C3",
             "ota": {
-                "md5": "21a5990e87ebbcf9caf5b0e3aca3c503",
+                "md5": "f1ef02a192008cd9eaa57e305bdc2200",
                 "path": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.1.8a.bin",
                 "release_url": "https://github.com/he-lab-pl/Pillar",
                 "summary": "Aktualizacja 1.8a: Poprawki."
