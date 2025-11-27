@@ -69,7 +69,17 @@ api:
 ota:
   - platform: esphome
     password: "${ota_password}"
+    on_begin:
+      then:
+        - light.turn_off:
+            id: led_light
+            transition_length: 0s
   - platform: http_request
+    on_begin:
+      then:
+        - light.turn_off:
+            id: led_light
+            transition_length: 0s
 
 logger:
   level: VERBOSE
