@@ -1,17 +1,17 @@
 {
     "name": "HEL Pillar",
-    "version": "1.8a",
-    "url": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.1.8a.bin",
+    "version": "1.9",
+    "url": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.1.9.bin",
     "release_url": "https://github.com/he-lab-pl/Pillar",
-    "summary": "Aktualizacja 1.8a: Poprawki.",
+    "summary": "Aktualizacja 1.9: Poprawione auto-wyłączanie światła przy aktualizacji.",
     "builds": [
         {
             "chipFamily": "ESP32-C3",
             "ota": {
-                "md5": "f1ef02a192008cd9eaa57e305bdc2200",
-                "path": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.1.8a.bin",
+                "md5": "2b92b8033565e988a3bcd725d30b2c7f",
+                "path": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.1.9.bin",
                 "release_url": "https://github.com/he-lab-pl/Pillar",
-                "summary": "Aktualizacja 1.8a: Poprawki."
+                "summary": "Aktualizacja 1.9: Poprawione auto-wyłączanie światła przy aktualizacji."
             }
         }
     ]
