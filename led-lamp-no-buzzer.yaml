@@ -1,162 +1,131 @@
 # ============================================================================
+# Home Element Lab - Pillar (HEL Pillar)
 # ESPHome Configuration for RGBCCT LED Lamp (No Buzzer Version)
 # Board: ESP32-C3 Super Mini
 # ============================================================================
-# 
-# Konfiguracja dla customowej lampy LED z obsługą:
-# - 5 kanałów PWM (Red, Green, Blue, Cold White, Warm White)
-# - 2 przyciski dotykowe TTP223
-# - Efekty świetlne (zorza, tęcza, świeczka, max jasność)
-# - Tryb AP do konfiguracji WiFi przez klienta
-# ============================================================================
 
 substitutions:
-  device_name: "led-lamp-no-buzzer"
-  friendly_name: "LED Lamp"
-  # Częstotliwość PWM dla LED - 4000Hz dla lepszej pracy MOSFETów Logic Level (IRLZ44N)
+  device_name: "hel-pillar-no-buzzer"
+  friendly_name: "HEL Pillar"
   pwm_frequency: "4000Hz"
-  ap_ssid: "LED Lamp Setup"
-  ap_password: "12345678"
-  wifi_ssid: "Orange_Swiatlowod_1E7A"
-  wifi_password: "PGGL53KE4GXD"
+  ap_ssid: "HEL Pillar Setup"
+  ota_password: ""
 
 # ============================================================================
-# PODSTAWOWA KONFIGURACJA ESP32-C3
+# CORE CONFIGURATION
 # ============================================================================
+
+dashboard_import:
+  package_import_url: github://home-element-lab/pillar/led-lamp-no-buzzer.yaml
+  import_full_config: true
 
 esphome:
   name: ${device_name}
-  # Dodajemy suffix MAC do nazwy urządzenia dla unikalności
-  # Ustawienie na false ułatwia wykrywanie w dashboardzie (stała nazwa hostname)
-  name_add_mac_suffix: false
+  name_add_mac_suffix: true
   
-  # Kod inicjalizacyjny - uruchamia się przy starcie
+  project:
+    name: "home-element-lab.pillar"
+    version: "1.0"
+
   on_boot:
-    priority: 600 # Bardzo wcześnie
+    priority: 600
     then:
-      # Przy pierwszym uruchomieniu światło będzie wyłączone
       - light.turn_off: led_light
 
-
-# Konfiguracja platformy ESP32-C3
-# Od ESPHome 2025.x wymagany osobny blok esp32
 esp32:
   board: esp32-c3-devkitm-1
-  # Framework ESP-IDF - natywny, bardziej stabilny dla RTTTL na C3
-  # Alternatywa: arduino
   framework:
     type: esp-idf
 
 # ============================================================================
-# KONFIGURACJA WiFi I SIECI
+# NETWORK
 # ============================================================================
 
 wifi:
-  # Konfiguracja sieci
-  networks:
-    # 1. Główna sieć domowa (z substitutions)
-    - ssid: "${wifi_ssid}"
-      password: "${wifi_password}"
-
-
-  # Domyślne ustawienia
-  fast_connect: false
-  # Usunięto power_save_mode: none, gdyż może powodować problemy z AP na C3
-  output_power: 8.5dB
-  
-  # Wyłączamy automatyczny restart przy braku połączenia WiFi
-  reboot_timeout: 0s
-  
-  # Konfiguracja Access Point
   ap:
     ssid: "${ap_ssid}"
-    password: "${ap_password}"
-    # ap_timeout: 0s
-    # channel: 1
     manual_ip:
       static_ip: 192.168.4.1
       gateway: 192.168.4.1
       subnet: 255.255.255.0
 
-# Konfiguracja Improv Wi-Fi over BLE
-# Umożliwia wykrycie lampy przez Home Assistant (lub telefon) zaraz po podłączeniu do prądu
-# i skonfigurowanie WiFi bez konieczności łączenia się z AP lampy.
-esp32_improv:
-  authorizer: none # Brak fizycznego przycisku do autoryzacji (działa automatycznie)
+  fast_connect: false
+  output_power: 8.5dB
+  reboot_timeout: 0s
+  
+  networks:
 
-# Captive Portal - interfejs webowy do konfiguracji WiFi
-# Otwiera się automatycznie po połączeniu z AP
+esp32_improv:
+  authorizer: none
+
 captive_portal:
 
-# API dla integracji z Home Assistant (bez klucza - szybkie parowanie)
 api:
   reboot_timeout: 0s
 
-# OTA (Over The Air) - aktualizacje przez WiFi
-# Od ESPHome 2025.x wymaga platformy
 ota:
   - platform: esphome
-    password: !secret ota_password
+    password: "${ota_password}"
 
-# Logger - do debugowania (można wyłączyć w produkcji)
 logger:
-  level: INFO # Zmieniono na INFO dla odciążenia procesora i Wi-Fi
-  # Dla ESP32-C3 Super Mini z natywnym USB używamy USB_CDC
+  level: INFO
   hardware_uart: USB_CDC
 
-# Web server do szybkiego podglądu (logowanie basic)
 web_server:
   port: 80
 
 # ============================================================================
-# WYJŚCIA PWM DLA KANAŁÓW LED
+# HARDWARE
 # ============================================================================
 
-# Definiujemy 5 kanałów PWM dla RGBCCT
-# Każdy kanał to osobne wyjście GPIO z konfiguracją PWM
-
 output:
-  # Kanał 1: Warm White (GPIO3)
+  # Warm White
   - platform: ledc
     pin: GPIO3
     frequency: ${pwm_frequency}
     id: output_warm_white
     
-  # Kanał 2: Cold White (GPIO4)
+  # Cold White
   - platform: ledc
     pin: GPIO4
     frequency: ${pwm_frequency}
     id: output_cold_white
     
-  # Kanał 3: Green (GPIO5)
+  # Green
   - platform: ledc
     pin: GPIO5
     frequency: ${pwm_frequency}
     id: output_green
     
-  # Kanał 4: Red (GPIO6)
+  # Red
   - platform: ledc
     pin: GPIO6
     frequency: ${pwm_frequency}
     id: output_red
     
-  # Kanał 5: Blue (GPIO10)
+  # Blue
   - platform: ledc
     pin: GPIO10
     frequency: ${pwm_frequency}
     id: output_blue
     max_power: 0.8
 
+# ============================================================================
+# CONTROLS
+# ============================================================================
 
-# Zmienne globalne
+button:
+  - platform: restart
+    id: restart_button
+    name: "${friendly_name} Restart"
+
 globals:
-  # Blokada przycisków (Child Lock)
   - id: buttons_locked
     type: bool
     restore_value: true
     initial_value: 'false'
 
-  # Zmienne do przywracania koloru po mignięciu (Blokada)
+  # State restoration variables
   - id: saved_brightness
     type: float
     initial_value: '0.0'
@@ -179,18 +148,14 @@ globals:
     type: bool
     initial_value: 'false'
 
-  # Zmienne do Minutnika (Sleep Timer)
   - id: sleep_timer_minutes
     type: int
     restore_value: false
     initial_value: '0'
 
-# Przełącznik do sterowania dźwiękiem (USUNIĘTY)
-
 switch:
-  # Blokada przycisków (Child Lock)
   - platform: template
-    name: "${friendly_name} Blokada Przycisków"
+    name: "${friendly_name} Button Lock"
     id: buttons_lock_switch
     icon: "mdi:lock"
     optimistic: true
@@ -199,24 +164,21 @@ switch:
       - globals.set:
           id: buttons_locked
           value: 'true'
-      - logger.log: "Blokada przycisków WŁĄCZONA"
     turn_off_action:
       - globals.set:
           id: buttons_locked
           value: 'false'
-      - logger.log: "Blokada przycisków WYŁĄCZONA"
     lambda: |-
       return id(buttons_locked);
 
-# Minutnik do usypiania (Sleep Timer)
 select:
   - platform: template
-    name: "${friendly_name} Minutnik (Sleep)"
+    name: "${friendly_name} Sleep Timer"
     id: sleep_timer
     icon: "mdi:timer-outline"
     optimistic: true
     options:
-      - "Wyłączony"
+      - "Off"
       - "1 min"
       - "5 min"
       - "10 min"
@@ -225,7 +187,7 @@ select:
       - "45 min"
       - "60 min"
       - "90 min"
-    initial_option: "Wyłączony"
+    initial_option: "Off"
     set_action:
       - lambda: |-
           std::string sel = x;
@@ -241,67 +203,36 @@ select:
           
           if (minutes > 0) {
             id(sleep_timer_minutes) = minutes;
-            ESP_LOGD("sleep_timer", "Uruchamiam timer na %d minut", minutes);
             id(timer_countdown).execute();
           } else {
-            ESP_LOGD("sleep_timer", "Zatrzymuję timer");
             id(timer_countdown).stop();
           }
 
-# Skrypt odliczający czas (z logowaniem co minutę)
+# ============================================================================
+# LOGIC
+# ============================================================================
+
 script:
+  # Sleep Timer Logic
   - id: timer_countdown
     mode: restart
     then:
-      - logger.log: "Timer: Start odliczania..."
-      
-      # Pętla odliczająca minuty
       - while:
           condition:
             lambda: 'return id(sleep_timer_minutes) > 0;'
           then:
-            - logger.log: 
-                format: "Do wyłączenia zostało %d minut"
-                args: [ 'id(sleep_timer_minutes)' ]
             - delay: 60s
             - lambda: 'id(sleep_timer_minutes) -= 1;'
       
-      - logger.log: "Czas minął! Wyłączanie efektów i wygaszanie..."
-      
-      # KROK 1: Wyłącz efekty
       - light.turn_on:
           id: led_light
           effect: "None"
-      
-      # KROK 2: Wygaś światło
       - light.turn_off:
           id: led_light
           transition_length: 60s
-          
-      # KROK 3: Reset selecta w HA
-      - lambda: 'id(sleep_timer).publish_state("Wyłączony");'
+      - lambda: 'id(sleep_timer).publish_state("Off");'
 
-  # ============================================================================
-  # RESET WIFI / TRYB AP - SKRYPTY
-  # ============================================================================
-
-  # Włączenie obu kanałów białych na 100% przy starcie lampy
-  - id: turn_on_whites
-    mode: single
-    then:
-      - lambda: |-
-          auto call = id(led_light).make_call();
-          call.set_state(true);
-          call.set_transition_length(0);
-          call.set_red(0.0f);
-          call.set_green(0.0f);
-          call.set_blue(0.0f);
-          call.set_cold_white(1.0f);
-          call.set_warm_white(1.0f);
-          call.set_brightness(1.0f);
-          call.perform();
-  
-  # Potwierdzenie wizualne wejścia w tryb parowania (3 mignięcia niebieskim)
+  # Visual Feedback
   - id: blink_blue_confirmation
     mode: single
     then:
@@ -323,12 +254,10 @@ script:
                 transition_length: 0.1s
             - delay: 0.3s
 
-  # Sygnalizacja zmiany blokady (3 mignięcia bursztynowe i powrót)
   - id: blink_amber_lock
     mode: single
     then:
       - lambda: |-
-          // Zapisz obecny stan
           auto call = id(led_light).current_values;
           id(saved_state) = call.is_on();
           id(saved_brightness) = call.get_brightness();
@@ -345,7 +274,6 @@ script:
                 id: led_light
                 transition_length: 0.1s
                 brightness: 100%
-                # Bursztynowy (Amber): 100% Red, 75% Green
                 red: 100%
                 green: 75%
                 blue: 0%
@@ -358,7 +286,6 @@ script:
             - delay: 0.3s
 
       - lambda: |-
-          // Przywróć stan
           if (id(saved_state)) {
             auto call = id(led_light).turn_on();
             call.set_transition_length(200);
@@ -375,7 +302,6 @@ script:
             call.perform();
           }
 
-  # Przełączanie blokady (logika)
   - id: toggle_button_lock
     mode: single
     then:
@@ -383,64 +309,36 @@ script:
           condition:
             lambda: 'return id(buttons_locked);'
           then:
-            # UNLOCKING (Blokada była włączona -> wyłączamy)
             - switch.turn_off: buttons_lock_switch
             - script.execute: blink_amber_lock
           else:
-            # LOCKING (Blokada była wyłączona -> włączamy)
             - switch.turn_on: buttons_lock_switch
             - script.execute: blink_amber_lock
 
-  # Reset ustawień WiFi i restart (wymuszenie AP)
+  # WiFi Reset Logic
   - id: force_ap_mode
     mode: single
     then:
-      - logger.log: "RESET WIFI - Czyszczenie danych i restart do trybu AP"
-      
-      # Wyczyszczenie zapisanych sieci WiFi z pamięci flash
       - lambda: |-
-          // Czyścimy dane STA w pamięci trwałej
           wifi::global_wifi_component->save_wifi_sta("", "");
-      
-      - logger.log: "Dane wyczyszczone. Restart za 3 sekundy..."
       - script.execute: blink_blue_confirmation
       - delay: 3s
       - button.press: restart_button
   
-  # Główny trigger przytrzymania obu przycisków
-  # 10s -> Toggle Lock
-  # 20s -> Reset WiFi (działa niezależnie od stanu blokady)
   - id: check_buttons_long_press
     mode: restart
     then:
-      - logger.log: "Oba przyciski wciśnięte - start odliczania..."
-      
-      # Etap 1: Czekamy 10s na zmianę blokady
-      - delay: 10s
+      - delay: 7s
       - if:
           condition:
             and:
               - binary_sensor.is_on: button_left
               - binary_sensor.is_on: button_right
           then:
-            - logger.log: "10s minęło - Przełączanie blokady przycisków"
-            - script.execute: toggle_button_lock
-            
-            # Etap 2: Czekamy kolejne 10s na reset WiFi (razem 20s)
-            - delay: 10s
-            - if:
-                condition:
-                  and:
-                    - binary_sensor.is_on: button_left
-                    - binary_sensor.is_on: button_right
-                then:
-                  - logger.log: "20s minęło - Uruchamianie Resetu WiFi"
-                  - script.execute: force_ap_mode
-          else:
-            - logger.log: "Przyciski zwolniono przed upływem 10s"
+            - script.execute: force_ap_mode
 
 # ============================================================================
-# GŁÓWNE ŚWIATŁO RGBCCT
+# LIGHT
 # ============================================================================
 
 light:
@@ -448,34 +346,24 @@ light:
     name: "${friendly_name}"
     id: led_light
     
-    # Przypisanie kanałów do kolorów
     red: output_red
     green: output_green
     blue: output_blue
     cold_white: output_cold_white
     warm_white: output_warm_white
     
-    # Temperatura kolorowa dla białych LED
     cold_white_color_temperature: 6500 K
     warm_white_color_temperature: 2700 K
     
-    # Wyłączenie interlocka
     color_interlock: false
-    
-    # Domyślna jasność i temperatura przy włączeniu
     default_transition_length: 1s
-    
-    # Restore mode - przywraca ostatni stan po restarcie
     restore_mode: RESTORE_DEFAULT_OFF
     
-    # ========================================================================
-    # EFEKTY ŚWIETLNE
-    # ========================================================================
     effects:
-      # ZORZA (Ultra Slow & Smooth)
+      # AURORA
       - lambda:
           name: "Zorza"
-          update_interval: 2s # Bardzo rzadka aktualizacja (odciąża sieć)
+          update_interval: 2s
           lambda: |-
             static float phase = 0.0;
             phase += 0.05;
@@ -483,7 +371,7 @@ light:
             
             auto call = id(led_light).turn_on();
             call.set_state(true);
-            call.set_transition_length(2000); // 2 sekundy płynnego przejścia
+            call.set_transition_length(2000);
             
             if (phase < 0.25) {
               float sub_phase = phase * 4.0;
@@ -505,7 +393,7 @@ light:
             call.set_brightness(1.0);
             call.perform();
       
-      # TĘCZA
+      # RAINBOW
       - lambda:
           name: "Tęcza"
           update_interval: 200ms
@@ -534,38 +422,56 @@ light:
             call.set_brightness(1.0);
             call.perform();
       
-      # ŚWIECZKA
+      # CANDLE
       - lambda:
           name: "Świeczka"
-          update_interval: 120ms # Średni interwał
+          update_interval: 120ms
           lambda: |-
+            static float target_level = 0.85f;
+            static float smooth_level = 0.85f;
+            static float smooth_red = 0.25f;
+            static float smooth_yellow = 0.2f;
+            static float smooth_warm = 0.85f;
+            static uint32_t last_burst = 0;
+
+            uint32_t now = millis();
+            float small_noise = ((rand() % 11) - 5) / 100.0f;
+            target_level += small_noise;
+            target_level = max(0.65f, min(1.0f, target_level));
+
+            if (now - last_burst > (rand() % 1700 + 800)) {
+              target_level = max(0.75f, min(1.0f, target_level + (rand() % 11 + 5) / 100.0f));
+              last_burst = now;
+            }
+
+            const float smoothing = 0.15f;
+            smooth_level = smooth_level + smoothing * (target_level - smooth_level);
+
+            float red_target = smooth_level * 0.35f;
+            float yellow_target = smooth_level * 0.25f;
+            float warm_target = smooth_level;
+
+            red_target += ((rand() % 5) - 2) / 100.0f;
+            yellow_target += ((rand() % 5) - 2) / 100.0f;
+
+            smooth_red = smooth_red + 0.15f * (red_target - smooth_red);
+            smooth_yellow = smooth_yellow + 0.15f * (yellow_target - smooth_yellow);
+            smooth_warm = smooth_warm + 0.15f * (warm_target - smooth_warm);
+
+            smooth_red = max(0.0f, min(1.0f, smooth_red));
+            smooth_yellow = max(0.0f, min(1.0f, smooth_yellow));
+            smooth_warm = max(0.0f, min(1.0f, smooth_warm));
+
             auto call = id(led_light).turn_on();
             call.set_state(true);
-            call.set_transition_length(40); // Krótka tranzycja = iskrzenie
-            
-            // Głównie ciepły biały z dodatkiem czerwieni (bursztyn)
-            float base_warm = 0.8f;
-            float flicker = ((rand() % 40) - 20) / 100.0f; // +/- 20% migotania
-            float brightness = base_warm + flicker;
-            
-            // Ograniczenie zakresu
-            if (brightness > 1.0) brightness = 1.0;
-            if (brightness < 0.4) brightness = 0.4;
-            
-            // Okazjonalne "iskry" (biały błysk)
-            float cold = 0.0f;
-            if (rand() % 15 == 0) { // Co 15 cykli (średnio)
-               cold = 0.3f; // Błysk zimnego
-               brightness = 1.0f; // Max jasność
-            }
-            
-            call.set_rgb(0.15f, 0.05f, 0.0f); // Lekka czerwień dla głębi
-            call.set_cold_white(cold);
-            call.set_warm_white(1.0f); // Zawsze dużo ciepłego
-            call.set_brightness(brightness);
+            call.set_transition_length(110);
+            call.set_rgb(smooth_red, smooth_yellow * 0.5f, 0.0f);
+            call.set_cold_white(0.0f);
+            call.set_warm_white(smooth_warm);
+            call.set_brightness(smooth_level);
             call.perform();
       
-      # MAKSYMALNA JASNOŚĆ
+      # MAX BRIGHTNESS
       - lambda:
           name: "Maksymalna Jasność"
           update_interval: 1s
@@ -579,7 +485,7 @@ light:
             call.set_brightness(1.0);
             call.perform();
 
-      # CZYTANIE (4200K - Neutral White)
+      # READING
       - lambda:
           name: "Czytanie"
           update_interval: 60s
@@ -587,15 +493,13 @@ light:
             auto call = id(led_light).turn_on();
             call.set_state(true);
             call.set_transition_length(1000);
-            // Mix dla uzyskania ok. 4200K + ciepły żółty odcień RGB
-            // RGB: 255, 178, 0 (warm yellow)
-            call.set_rgb(1.0f, 0.698f, 0.0f); // 178/255 = 0.698
+            call.set_rgb(1.0f, 0.698f, 0.0f);
             call.set_cold_white(0.55f);
             call.set_warm_white(1.0f);
             call.set_brightness(0.9f);
             call.perform();
 
-      # LAS
+      # FOREST
       - lambda:
           name: "Las"
           update_interval: 2s
@@ -611,7 +515,7 @@ light:
             call.set_brightness(0.7);
             call.perform();
 
-      # OCEAN (Ultra Slow Optimization)
+      # OCEAN
       - lambda:
           name: "Ocean"
           update_interval: 2s
@@ -637,7 +541,7 @@ light:
             call.set_brightness(1.0);
             call.perform();
 
-      # IMPREZA
+      # PARTY
       - lambda:
           name: "Impreza"
           update_interval: 300ms
@@ -656,7 +560,7 @@ light:
             call.set_brightness(1.0);
             call.perform();
 
-      # ZACHÓD SŁOŃCA
+      # SUNSET
       - lambda:
           name: "Zachód Słońca"
           update_interval: 200ms
@@ -686,7 +590,7 @@ light:
             call.set_brightness(0.9);
             call.perform();
 
-      # KOMINEK 1 (Zbalansowany - Smart Random)
+      # FIREPLACE 1
       - lambda:
           name: "Kominek 1"
           update_interval: 150ms
@@ -699,23 +603,21 @@ light:
              auto call = id(led_light).turn_on();
              call.set_state(true);
 
-             // 2% szans na iskrę (rzadziej: rand % 50)
              if ((rand() % 50) == 0) {
                 call.set_transition_length(30); 
                 call.set_rgb(1.0, 0.5, 0.0); 
-                call.set_cold_white(0.03); // Iskra 3% jasności
+                call.set_cold_white(0.03);
                 call.set_warm_white(0.6);
                 call.set_brightness(1.0);
                 next_update = now + 100 + (rand() % 100); 
              } 
              else {
-                // Wolniejszy ogień (0.5s - 1.5s)
                 uint32_t duration = 500 + (rand() % 1000);
                 call.set_transition_length(duration);
                 
                 float r = 0.90f + ((rand() % 10) / 100.0f);
                 float g = ((rand() % 12) / 100.0f);
-                float w = 0.48f + ((rand() % 12) / 100.0f); // Jasny podkład
+                float w = 0.48f + ((rand() % 12) / 100.0f);
                 
                 call.set_rgb(r, g, 0.0);
                 call.set_cold_white(0.0);
@@ -725,7 +627,7 @@ light:
              }
              call.perform();
 
-      # KOMINEK 2 (Jasny Domowy - Stabilny)
+      # FIREPLACE 2
       - lambda:
           name: "Kominek 2"
           update_interval: 300ms
@@ -734,96 +636,48 @@ light:
              call.set_state(true);
              call.set_transition_length(300);
 
-             // Dominacja Warm White
-             // Fluktuacja KOLORU (Czerwony <-> Pomarańczowy)
-             // Red stały wysoki, Green fluktuuje (0.0 - 0.5)
-             // Orange to R=1, G=0.5. Red to R=1, G=0.
-             
-             float g = (rand() % 51) / 100.0f; // 0.00 - 0.50
-             float w = 0.80f + ((rand() % 20) / 100.0f); // Bardzo jasny biały (0.8-1.0)
+             float g = (rand() % 51) / 100.0f;
+             float w = 0.80f + ((rand() % 20) / 100.0f);
 
              call.set_rgb(1.0, g, 0.0);
              call.set_cold_white(0.0);
              call.set_warm_white(w);
-             call.set_brightness(0.95); // Prawie max jasność stale
+             call.set_brightness(0.95);
              call.perform();
 
-      # ŻAR (Dawniej Kominek 2 - Spokojny Żar - Wolny, Czerwony)
+      # EMBER
       - lambda:
           name: "Żar"
           update_interval: 200ms
           lambda: |-
              auto call = id(led_light).turn_on();
              call.set_state(true);
-             call.set_transition_length(200); // Pełna płynność
+             call.set_transition_length(200);
 
-             // Tylko głęboka czerwień i trochę ciepłego
              float r = 0.95f + ((rand() % 5) / 100.0f);
-             float g = ((rand() % 5) / 100.0f); // Prawie brak zieleni
-             float w = 0.20f + ((rand() % 10) / 100.0f); // Ciemny ciepły
+             float g = ((rand() % 5) / 100.0f);
+             float w = 0.20f + ((rand() % 10) / 100.0f);
 
              call.set_rgb(r, g, 0.0);
              call.set_cold_white(0.0);
              call.set_warm_white(w);
              
-             // Ciemniejszy efekt (0.6 - 0.7)
              call.set_brightness(0.6f + ((rand() % 10) / 100.0f));
              call.perform();
 
-
-
-      # CYBERPUNK
-      - lambda:
-          name: "Cyberpunk"
-          update_interval: 150ms
-          lambda: |-
-            static float phase = 0.0;
-            phase += 0.02;
-            if (phase > 1.0) phase = 0.0;
-            float val = sin(phase * 6.28318); 
-            float mix = (val + 1.0) / 2.0;
-            auto call = id(led_light).turn_on();
-            call.set_state(true);
-            call.set_transition_length(150);
-            call.set_rgb(1.0 - mix, mix, 1.0);
-            call.set_cold_white(0.1);
-            call.set_warm_white(0.0);
-            call.set_brightness(1.0);
-            call.perform();
-
-      # MEDYTACJA
-      - lambda:
-          name: "Medytacja"
-          update_interval: 150ms
-          lambda: |-
-            static float phase = 0.0;
-            phase += 0.01;
-            if (phase > 1.0) phase = 0.0;
-            float val = sin(phase * 6.28318); 
-            float breath = (val + 1.0) / 2.0; 
-            float brightness = 0.2f + (breath * 0.8f);
-            auto call = id(led_light).turn_on();
-            call.set_state(true);
-            call.set_transition_length(150);
-            call.set_rgb(0.1, 0.0, 0.0);
-            call.set_cold_white(0.0);
-            call.set_warm_white(1.0);
-            call.set_brightness(brightness);
-            call.perform();
-
 # ============================================================================
-# PRZYCISKI DOTYKOWE TTP223
+# SENSORS
 # ============================================================================
 
 binary_sensor:
-  # Przycisk lewy - GPIO0 (ściemnianie / wyłączanie)
+  # Left Button
   - platform: gpio
     pin:
       number: GPIO1
       mode:
         input: true
         pulldown: true
-    name: "${friendly_name} Przycisk Lewy"
+    name: "${friendly_name} Left Button"
     id: button_left
     internal: false
     
@@ -833,8 +687,6 @@ binary_sensor:
     
     on_press:
       then:
-        - logger.log: "Lewy przycisk naciśnięty"
-        # Sprawdź czy oba przyciski są wciśnięte jednocześnie
         - if:
             condition:
               and:
@@ -845,7 +697,7 @@ binary_sensor:
               - script.execute: check_buttons_long_press
     
     on_click:
-      # Pojedyncze kliknięcie - ściemnianie
+      # Single click - Dimming
       - min_length: 50ms
         max_length: 2000ms
         then:
@@ -853,15 +705,12 @@ binary_sensor:
               condition:
                 lambda: 'return !id(buttons_locked);'
               then:
-                - logger.log: "Lewy przycisk - ściemnianie"
                 - light.dim_relative:
                     id: led_light
                     relative_brightness: -15%
                     transition_length: 0.5s
-              else:
-                - logger.log: "Przycisk zablokowany"
     
-    # Przytrzymanie 3 sekundy - wyłączenie lampy
+    # Hold 3s - Turn OFF
     on_multi_click:
       - timing:
           - ON for at least 3s
@@ -870,19 +719,16 @@ binary_sensor:
               condition:
                 lambda: 'return !id(buttons_locked);'
               then:
-                - logger.log: "Wyłączanie lampy (3s)"
                 - light.turn_off: led_light
-              else:
-                - logger.log: "Wyłączanie zablokowane"
   
-  # Przycisk prawy - GPIO1 (rozjaśnianie / włączanie)
+  # Right Button
   - platform: gpio
     pin:
       number: GPIO0
       mode:
         input: true
         pulldown: true
-    name: "${friendly_name} Przycisk Prawy"
+    name: "${friendly_name} Right Button"
     id: button_right
     internal: false
     
@@ -892,7 +738,6 @@ binary_sensor:
     
     on_press:
       then:
-        - logger.log: "Prawy przycisk naciśnięty"
         - if:
             condition:
               and:
@@ -914,66 +759,23 @@ binary_sensor:
                     condition:
                       light.is_off: led_light
                     then:
-                      - logger.log: "Light OFF -> Turning ON Warm Orange + White"
                       - lambda: |-
                           auto call = id(led_light).turn_on();
                           call.set_effect("None");
                           call.set_brightness(0.15);
-                          // Warm orange: R=255, G=38, B=0
-                          call.set_rgb(1.0, 0.149, 0.0); // 38/255 = 0.149
+                          call.set_rgb(1.0, 0.149, 0.0);
                           call.set_cold_white(1.0);
                           call.set_warm_white(1.0);
                           call.set_transition_length(1000);
                           call.perform();
                     else:
-                      - logger.log: "Prawy przycisk - rozjaśnianie (+15%)"
                       - light.dim_relative:
                           id: led_light
                           relative_brightness: 15%
                           transition_length: 0.5s
-              else:
-                - logger.log: "Przycisk zablokowany"
-
-# ============================================================================
-# SENSORY DIAGNOSTYCZNE
-# ============================================================================
 
 sensor:
-  # Siła sygnału WiFi
   - platform: wifi_signal
     name: "${friendly_name} WiFi Signal"
     update_interval: 60s
     internal: false
-  
-  # Czas pracy urządzenia
-  - platform: uptime
-    name: "${friendly_name} Uptime"
-    update_interval: 60s
-    internal: false
-
-text_sensor:
-  # Adres IP urządzenia
-  - platform: wifi_info
-    ip_address:
-      name: "${friendly_name} IP Address"
-      internal: false
-    
-    # MAC Address - używany w nazwie urządzenia
-    mac_address:
-      name: "${friendly_name} MAC Address"
-      internal: false
-
-# ============================================================================
-# PRZYCISKI W HOME ASSISTANT
-# ============================================================================
-
-button:
-  # Przycisk do restartu urządzenia z HA
-  - platform: restart
-    name: "${friendly_name} Restart"
-    id: restart_button
-    internal: false
-
-# ============================================================================
-# KONIEC KONFIGURACJI
-# ============================================================================

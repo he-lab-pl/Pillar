@@ -1,25 +1,18 @@
-# ============================================================================
-# .gitignore dla projektu ESPHome LED Lamp
-# ============================================================================
-
-# Pliki z wrażliwymi danymi - NIGDY nie commituj!
-secrets.yaml
-
-# Pliki tymczasowe ESPHome
+# ESPHome build artifacts
 .esphome/
+.pio/
+.vscode/
 *.bin
 *.elf
 *.map
-
-# Logi
 *.log
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Secrets
+secrets.yaml
+secrets.py
+
+# Local workspace (dev files)
+dev_workspace/
 
 # System
 .DS_Store
@@ -28,4 +21,3 @@ Thumbs.db
 # Backup
 *.bak
 *.backup
-
