@@ -25,7 +25,7 @@ esphome:
   
   project:
     name: "home-element-lab.pillar"
-    version: "1.2"
+    version: "1.6"
 
   on_boot:
     priority: 600
