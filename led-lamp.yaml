@@ -17,7 +17,7 @@ substitutions:
 
 dashboard_import:
   package_import_url: github://he-lab-pl/Pillar/led-lamp.yaml@main
-  import_full_config: true
+  import_full_config: false
 
 esphome:
   name: ${device_name}
@@ -25,7 +25,7 @@ esphome:
   
   project:
     name: "home-element-lab.pillar"
-    version: "1.5"
+    version: "1.0"
 
   on_boot:
     priority: 600
