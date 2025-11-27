@@ -2,7 +2,6 @@
 .esphome/
 .pio/
 .vscode/
-*.bin
 *.elf
 *.map
 *.log
