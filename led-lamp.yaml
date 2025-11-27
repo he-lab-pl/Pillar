@@ -1,14 +1,14 @@
 # ============================================================================
-# Home Element Lab - Pillar (HEL Pillar)
+# Home Element Lab - Pillar (HE-L Pillar)
 # ESPHome Configuration for RGBCCT LED Lamp
 # Board: ESP32-C3 Super Mini
 # ============================================================================
 
 substitutions:
-  device_name: "hel-pillar"
-  friendly_name: "HEL Pillar"
+  device_name: "he-l-pillar"
+  friendly_name: "HE-L Pillar"
   pwm_frequency: "4000Hz"
-  ap_ssid: "HEL Pillar Setup"
+  ap_ssid: "HE-L Pillar Setup"
   ota_password: ""
 
 # ============================================================================
@@ -62,7 +62,6 @@ esp32_improv:
 captive_portal:
 
 http_request:
-  verify_ssl: false
 
 api:
   reboot_timeout: 0s
@@ -73,7 +72,7 @@ ota:
   - platform: http_request
 
 logger:
-  level: INFO
+  level: VERBOSE
   hardware_uart: USB_CDC
 
 web_server:
@@ -83,6 +82,8 @@ update:
   - platform: http_request
     name: "${friendly_name} Firmware"
     source: https://raw.githubusercontent.com/he-lab-pl/Pillar/main/manifest.json
+    update_interval: 6h
+    id: firmware_update_entity
 
 
 # ============================================================================
@@ -140,6 +141,11 @@ button:
   - platform: restart
     id: restart_button
     name: "${friendly_name} Restart"
+
+  - platform: template
+    name: "${friendly_name} Force Update Check"
+    on_press:
+      - component.update: firmware_update_entity
 
 globals:
   - id: sound_enabled
@@ -793,6 +799,22 @@ light:
 # SENSORS
 # ============================================================================
 
+sensor:
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+    update_interval: 5min
+
+  - platform: wifi_signal
+    name: "${friendly_name} WiFi Signal"
+    update_interval: 5min
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${friendly_name} IP Address"
+    ssid:
+      name: "${friendly_name} SSID"
+
 binary_sensor:
   # Left Button
   - platform: gpio
@@ -898,8 +920,4 @@ binary_sensor:
                           relative_brightness: 15%
                           transition_length: 0.5s
 
-sensor:
-  - platform: wifi_signal
-    name: "${friendly_name} WiFi Signal"
-    update_interval: 60s
-    internal: false
+

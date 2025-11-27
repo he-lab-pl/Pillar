@@ -8,7 +8,7 @@
         {
             "chipFamily": "ESP32-C3",
             "ota": {
-                "md5": "F45C070A8A7C516D2F24BA67D488216D",
+                "md5": "e1a98b909f653ee718e58a21af65e4d3",
                 "path": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/hel-pillar.bin",
                 "release_url": "https://github.com/he-lab-pl/Pillar",
                 "summary": "Testowa aktualizacja lampy bez nowych funkcji. To jest test."
