@@ -1,17 +1,17 @@
 {
     "name": "HEL Pillar",
-    "version": "2.1",
-    "url": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.2.1.bin",
+    "version": "2.2",
+    "url": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.2.2.bin",
     "release_url": "https://github.com/he-lab-pl/Pillar",
-    "summary": "Aktualizacja 2.1: ESPHome z poprawkami Wi-Fi, zsynchronizowana wersja projektu.",
+    "summary": "Aktualizacja 2.2: Tryby włączenia światła z selecta, poprawki ESPHome Wi-Fi.",
     "builds": [
         {
             "chipFamily": "ESP32-C3",
             "ota": {
-                "md5": "02a6e7eb08f20e52fcd21abb01a3f591",
-                "path": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.2.1.bin",
+                "md5": "b00887c368ef42546169d10fe098e4d2",
+                "path": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.2.2.bin",
                 "release_url": "https://github.com/he-lab-pl/Pillar",
-                "summary": "Aktualizacja 2.1: ESPHome z poprawkami Wi-Fi, zsynchronizowana wersja projektu."
+                "summary": "Aktualizacja 2.2: Tryby włączenia światła z selecta, poprawki ESPHome Wi-Fi."
             }
         }
     ]

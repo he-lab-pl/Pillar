@@ -25,7 +25,7 @@ esphome:
   
   project:
     name: home-element-lab.pillar
-    version: "2.1"
+    version: "2.2"
   on_boot:
     priority: 600
     then:
@@ -291,6 +291,22 @@ select:
             id(timer_countdown).stop();
           }
 
+  # Tryby włączenia z przycisku (gdy lampa zgaszona).
+  # Platforma rgbww bez color_interlock: RGB i CW/WW mogą działać równolegle.
+  # Nie da się wiarygodnie wyłączyć samych diod RGB przy samym CW — sterownik
+  # i tak je miesza (dokumentacja ESPHome). W kodzie ustawiamy tylko to, co ma sens.
+  - platform: template
+    name: "${friendly_name} Tryb włączenia"
+    id: power_on_mode_select
+    icon: "mdi:lightbulb-on-outline"
+    optimistic: true
+    restore_value: true
+    options:
+      - "Biały ciepły"
+      - "Biały zimny"
+      - "Maksymalna jasność"
+    initial_option: "Biały ciepły"
+
 # ============================================================================
 # LOGIC
 # ============================================================================
@@ -314,6 +330,36 @@ script:
           id: led_light
           transition_length: 60s
       - lambda: 'id(sleep_timer).publish_state("Off");'
+
+  - id: apply_power_on_mode
+    mode: single
+    then:
+      - lambda: |-
+          auto call = id(led_light).turn_on();
+          call.set_effect("None");
+          call.set_transition_length(1000);
+          call.set_brightness(0.15);
+
+          std::string mode = id(power_on_mode_select).current_option();
+          if (mode == "Biały zimny") {
+            // Tylko kanały bieli — bez set_red/green/blue (rgbww i tak miesza RGB z CW).
+            call.set_cold_white(1.0);
+            call.set_warm_white(0.0);
+          } else if (mode == "Maksymalna jasność") {
+            call.set_red(1.0);
+            call.set_green(1.0);
+            call.set_blue(1.0);
+            call.set_cold_white(1.0);
+            call.set_warm_white(1.0);
+          } else {
+            // Biały ciepły: dioda WW + czerwony RGB (wspierane przy color_interlock: false).
+            call.set_red(1.0);
+            call.set_green(0.0);
+            call.set_blue(0.0);
+            call.set_cold_white(0.0);
+            call.set_warm_white(1.0);
+          }
+          call.perform();
 
   # Audio Feedback
   - id: buzzer_beep
@@ -983,15 +1029,7 @@ binary_sensor:
                     condition:
                       light.is_off: led_light
                     then:
-                      - lambda: |-
-                          auto call = id(led_light).turn_on();
-                          call.set_effect("None");
-                          call.set_brightness(0.15);
-                          call.set_rgb(1.0, 0.149, 0.0);
-                          call.set_cold_white(1.0);
-                          call.set_warm_white(1.0);
-                          call.set_transition_length(1000);
-                          call.perform();
+                      - script.execute: apply_power_on_mode
                     else:
                       - light.dim_relative:
                           id: led_light
