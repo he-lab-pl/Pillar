@@ -24,9 +24,8 @@ esphome:
   name_add_mac_suffix: true
   
   project:
-    name: "home-element-lab.pillar"
-    version: "1.9"
-
+    name: home-element-lab.pillar
+    version: "2.1"
   on_boot:
     priority: 600
     then:
@@ -82,7 +81,7 @@ ota:
             transition_length: 0s
 
 logger:
-  level: VERBOSE
+  # level: VERBOSE
   hardware_uart: USB_CDC
 
 web_server:
@@ -805,6 +804,75 @@ light:
              call.set_brightness(0.6f + ((rand() % 10) / 100.0f));
              call.perform();
 
+      # TV Simulator (Advanced)
+      - lambda:
+          name: "Symulacja TV"
+          update_interval: 200ms
+          lambda: |-
+            static float current_prob = 0.1; 
+
+            // 1. Check Trigger (Probabilistic check for natural irregularity)
+            if ((rand() % 1000) >= (current_prob * 1000)) return;
+
+            // 2. Perform Change
+            auto call = id(led_light).turn_on();
+            
+            // Transition depends on pace
+            uint32_t transition = 0;
+            if (current_prob < 0.2) { // Slow pace -> Slow fade
+                transition = 500 + (rand() % 2500);
+            } else { // Fast pace -> Cut or fast fade
+                transition = (rand() % 100) < 70 ? 0 : (100 + rand() % 400);
+            }
+            call.set_transition_length(transition);
+
+            // Logic: Randomly change Brightness, Color, or Both
+            bool ch_bri = (rand() % 100) < 70;
+            bool ch_col = (rand() % 100) < 70;
+            if (!ch_bri && !ch_col) ch_bri = true;
+
+            if (ch_bri) {
+                float b = 0.1f + ((rand() % 80) / 100.0f);
+                if ((rand() % 100) < 20) b *= 0.4; // Occasional dim
+                call.set_brightness(b);
+            }
+
+            if (ch_col) {
+                float r=0, g=0, b=0, cw=0, ww=0;
+                int scene = rand() % 100;
+                if (scene < 50) { // Cool
+                    cw = 0.4f + ((rand() % 60) / 100.0f);
+                    b = ((rand() % 30) / 100.0f);
+                } else if (scene < 75) { // Warm
+                    cw = 0.2f + ((rand() % 30) / 100.0f);
+                    ww = 0.3f + ((rand() % 50) / 100.0f);
+                } else if (scene < 90) { // Dark
+                    b = 0.2f + ((rand() % 40) / 100.0f);
+                    cw = 0.1f;
+                } else { // Vivid
+                    r = ((rand() % 80) / 100.0f);
+                    g = ((rand() % 50) / 100.0f);
+                    b = ((rand() % 80) / 100.0f);
+                }
+                call.set_rgb(r, g, b);
+                call.set_cold_white(cw);
+                call.set_warm_white(ww);
+            }
+            call.perform();
+
+            // 3. Update Pace (Switch between Action and Drama)
+            // 20% chance to change the "scene pace" after a light change
+            if ((rand() % 100) < 20) {
+                // 40% chance of Action (Fast), 60% chance of Drama (Slow)
+                if ((rand() % 100) < 40) {
+                    // Action: Prob 0.3 (0.6s) to 0.8 (0.25s)
+                    current_prob = 0.3 + ((rand() % 50) / 100.0f);
+                } else {
+                    // Drama: Prob 0.02 (10s) to 0.15 (1.3s)
+                    current_prob = 0.02 + ((rand() % 13) / 100.0f);
+                }
+            }
+
 # ============================================================================
 # SENSORS
 # ============================================================================
@@ -873,7 +941,7 @@ binary_sensor:
         then:
           - if:
               condition:
-                lambda: 'return !id(buttons_locked);'
+                lambda: 'return !id(buttons_locked);' 
               then:
                 - light.turn_off: led_light
   
