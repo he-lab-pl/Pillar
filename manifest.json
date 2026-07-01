@@ -1,17 +1,17 @@
 {
     "name": "HEL Pillar",
-    "version": "1.9",
-    "url": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.1.9.bin",
+    "version": "2.0",
+    "url": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.2.0.bin",
     "release_url": "https://github.com/he-lab-pl/Pillar",
-    "summary": "Aktualizacja 1.9: Poprawione auto-wyłączanie światła przy aktualizacji.",
+    "summary": "Aktualizacja 2.0: Nowa wersja ESPHome z poprawkami stabilności Wi-Fi.",
     "builds": [
         {
             "chipFamily": "ESP32-C3",
             "ota": {
-                "md5": "81b178d49c0e4870540e1dffa6fb7653",
-                "path": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.1.9.bin",
+                "md5": "1511ebf6dcf5deee4717568e15f023ee8",
+                "path": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.2.0.bin",
                 "release_url": "https://github.com/he-lab-pl/Pillar",
-                "summary": "Aktualizacja 1.9: Poprawione auto-wyłączanie światła przy aktualizacji."
+                "summary": "Aktualizacja 2.0: Nowa wersja ESPHome z poprawkami stabilności Wi-Fi."
             }
         }
     ]
