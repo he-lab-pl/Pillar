@@ -8,7 +8,7 @@
         {
             "chipFamily": "ESP32-C3",
             "ota": {
-                "md5": "1511ebf6dcf5deee4717568e15f023ee8",
+                "md5": "02a6e7eb08f20e52fcd21abb01a3f591",
                 "path": "https://raw.githubusercontent.com/he-lab-pl/Pillar/main/firmware/he-l-pillar.2.1.bin",
                 "release_url": "https://github.com/he-lab-pl/Pillar",
                 "summary": "Aktualizacja 2.1: ESPHome z poprawkami Wi-Fi, zsynchronizowana wersja projektu."
